@@ -5,14 +5,14 @@ module ActionCable
     # disconnect.
     class Heartbeat
       BEAT_INTERVAL = 3
-      
+
       def initialize(connection)
         @connection = connection
       end
 
       def start
         beat
-        @timer = EventMachine.add_periodic_timer(BEAT_INTERVAL) { beat }
+        @timer = EventMachine.add_periodic_timer(BEAT_INTERVAL) { beat } unless initialize_reactor?
       end
 
       def stop
@@ -21,10 +21,14 @@ module ActionCable
 
       private
         attr_reader :connection
-        
+
         def beat
           connection.transmit({ identifier: '_ping', message: Time.now.to_i }.to_json)
         end
+
+        def initialize_reactor?
+          EventMachine.reactor_running? && EventMachine.reactor_thread.alive?
+        end  
     end
   end
 end
